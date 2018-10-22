@@ -1,7 +1,7 @@
 import numpy as np
 from enum import Enum
 
-class _BoundaryChange(Enum):
+class BoundaryChange(Enum):
     Nochange = 0
     Upper = 1
     Lower = 2
@@ -95,7 +95,7 @@ class PyLineSearch:
         beta = 0
         f_alpha = 0
         f_beta = 0
-        bound = _BoundaryChange.Nochange
+        bound = BoundaryChange.Nochange
 
         for index in range(0, Iteration_N):
             print('Step:',index)
@@ -106,27 +106,27 @@ class PyLineSearch:
                 f_beta = func(beta)
                 if (f_alpha < f_beta):
                     Interval_Upper = beta
-                    bound = _BoundaryChange.Upper
+                    bound = BoundaryChange.Upper
                     print('Upper Changed, Upper: ', Interval_Upper)
                 elif (f_alpha > f_beta):
                     Interval_Lower = g_1
-                    bound = _BoundaryChange.Lower
+                    bound = BoundaryChange.Lower
                     print('Lower Changed, Lower: ', Interval_Lower)
                 else:
                     Interval_Lower = g_1
                     Interval_Upper = beta
-                    bound = _BoundaryChange.Both
+                    bound = BoundaryChange.Both
                     print('Both Changed, Lower: ', Interval_Lower, ' ,Upper: ', Interval_Upper)
                 
                 Interval = Interval_Upper - Interval_Lower
             else:
-                if (bound == _BoundaryChange.Lower):
+                if (bound == BoundaryChange.Lower):
                     alpha = beta
                     f_alpha = f_beta
                     beta = Interval_Lower + (1 - self.__rho) * Interval
                     f_beta = func(beta)
 
-                elif(bound == _BoundaryChange.Upper):
+                elif(bound == BoundaryChange.Upper):
                     beta = alpha
                     f_beta = f_alpha
                     alpha = Interval_Lower + self.__rho * Interval
@@ -140,16 +140,16 @@ class PyLineSearch:
 
                 if (f_alpha < f_beta):
                     Interval_Upper = beta
-                    bound = _BoundaryChange.Upper
+                    bound = BoundaryChange.Upper
                     print('Upper Changed, Upper: ', Interval_Upper)
                 elif(f_alpha > f_beta):
                     Interval_Lower = alpha
-                    bound = _BoundaryChange.Lower
+                    bound = BoundaryChange.Lower
                     print('Lower Changed, Lower: ', Interval_Lower)
                 else:
                     Interval_Lower = alpha
                     Interval_Upper = beta
-                    bound = _BoundaryChange.Both
+                    bound = BoundaryChange.Both
                     print('Both Changed, Lower: ', Interval_Lower, ' ,Upper: ', Interval_Upper)
 
                 Interval = Interval_Upper - Interval_Lower
@@ -229,7 +229,7 @@ class PyLineSearch:
         beta = 0
         f_alpha = 0
         f_beta = 0
-        bound = _BoundaryChange.Nochange
+        bound = BoundaryChange.Nochange
 
         for index in range(0, Iteration_N):
             if (index == 0):
@@ -241,16 +241,16 @@ class PyLineSearch:
                 f_beta  = func(beta)
                 if (f_alpha < f_beta):
                     Interval_Upper = beta
-                    bound = _BoundaryChange.Upper
+                    bound = BoundaryChange.Upper
                     print('Upper Changed, Upper: ', Interval_Upper)
                 elif (f_alpha > f_beta):
                     Interval_Lower = alpha
-                    bound = _BoundaryChange.Lower
+                    bound = BoundaryChange.Lower
                     print('Lower Changed, Lower: ', Interval_Lower)
                 else:
                     Interval_Lower = alpha
                     Interval_Upper = beta
-                    bound = _BoundaryChange.Both
+                    bound = BoundaryChange.Both
                     print('Both Changed, Lower: ', Interval_Lower, ' ,Upper: ', Interval_Upper)
                 
                 Interval = Interval_Upper - Interval_Lower
@@ -258,13 +258,13 @@ class PyLineSearch:
             elif (index == (Iteration_N-1)):
                 rho = 0.5 - epsilon/2
                 print('rho: ', rho)
-                if (bound == _BoundaryChange.Lower):
+                if (bound == BoundaryChange.Lower):
                     alpha = beta
                     f_alpha = f_beta
                     beta = Interval_Lower + (1 - rho) * Interval
                     f_beta = func(beta)
 
-                elif(bound == _BoundaryChange.Upper):
+                elif(bound == BoundaryChange.Upper):
                     beta = alpha
                     f_beta = f_alpha
                     alpha = Interval_Lower + rho * Interval
@@ -278,16 +278,16 @@ class PyLineSearch:
 
                 if (f_alpha < f_beta):
                     Interval_Upper = beta
-                    bound = _BoundaryChange.Upper
+                    bound = BoundaryChange.Upper
                     print('Upper Changed, Upper: ', Interval_Upper)
                 elif(f_alpha > f_beta):
                     Interval_Lower = alpha
-                    bound = _BoundaryChange.Lower
+                    bound = BoundaryChange.Lower
                     print('Lower Changed, Lower: ', Interval_Lower)
                 else:
                     Interval_Lower = alpha
                     Interval_Upper = beta
-                    bound = _BoundaryChange.Both
+                    bound = BoundaryChange.Both
                     print('Both Changed, Lower: ', Interval_Lower, ' ,Upper: ', Interval_Upper)
 
                 Interval = Interval_Upper - Interval_Lower
@@ -295,13 +295,13 @@ class PyLineSearch:
             else:
                 rho = 1 - (FibSequence(Iteration_N-index)/ FibSequence(Iteration_N-index+1))
                 print('rho: ', rho)
-                if (bound == _BoundaryChange.Lower):
+                if (bound == BoundaryChange.Lower):
                     alpha = beta
                     f_alpha = f_beta
                     beta = Interval_Lower + (1 - rho) * Interval
                     f_beta = func(beta)
 
-                elif(bound == _BoundaryChange.Upper):
+                elif(bound == BoundaryChange.Upper):
                     beta = alpha
                     f_beta = f_alpha
                     alpha = Interval_Lower + rho * Interval
@@ -315,16 +315,16 @@ class PyLineSearch:
 
                 if (f_alpha < f_beta):
                     Interval_Upper = beta
-                    bound = _BoundaryChange.Upper
+                    bound = BoundaryChange.Upper
                     print('Upper Changed, Upper: ', Interval_Upper)
                 elif(f_alpha > f_beta):
                     Interval_Lower = alpha
-                    bound = _BoundaryChange.Lower
+                    bound = BoundaryChange.Lower
                     print('Lower Changed, Lower: ', Interval_Lower)
                 else:
                     Interval_Lower = alpha
                     Interval_Upper = beta
-                    bound = _BoundaryChange.Both
+                    bound = BoundaryChange.Both
                     print('Both Changed, Lower: ', Interval_Lower, ' ,Upper: ', Interval_Upper)
 
                 Interval = Interval_Upper - Interval_Lower
