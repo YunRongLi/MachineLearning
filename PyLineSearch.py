@@ -13,6 +13,94 @@ def FibSequence(n):
     else:
         return FibSequence(n-1) + FibSequence(n-2)
 
+class CGSSearch:
+    def __init__(self, costfunc, x=0, delta=0.1, eps=0.01):
+        self.__FibCoe = 1.618
+        self.__x = x
+        self.__delta = delta
+        self.__eps = eps
+        self.__costfunc = costfunc
+
+    def set_costfunc(self, costfunc):
+        self.__costfunc = costfunc
+
+    def set_x(self, x):
+        self.__x = x
+
+    def set_delta(self, delta):
+        self.__delta = delta
+
+    def set_eps(self, eps):
+        self.__eps = eps
+
+    def __Step(self, N):
+        Step = 0
+        for index in range(0, N+1):
+            Step = Step + self.__delta * self.__FibCoe**index
+        return Step
+
+    def Phase1(self):
+        g_2 = 0
+        g_1 = 0
+        g   = 0        
+        fg_2 = 0
+        fg_1 = 0
+        fg   = 0
+        
+        fg_2 = self.__costfunc(g_2)
+        g_1 = self.__delta
+        fg_1 = self.__costfunc(g_1)
+
+        if (fg_1 >= fg_2):
+            print('---Uncertainty Interval---')
+            print('Lower: '+ g_2, ' ,Upper: ', g_1)
+            return g_2, g_1, fg_2, fg_1
+
+        index = 2
+        #print('------------Phase 1 Start------------')
+        while(True):
+            if (index == 2):
+                g = self.__Step(index)
+                fg   = self.__costfunc(g)
+
+            else:
+                g_2 = g_1
+                g_1 = g
+                g   = self.__Step(index)
+
+                fg_2 = fg_1
+                fg_1 = fg
+                fg   = self.__costfunc(g)
+
+            if (fg_2 > fg_1 and fg_1 < fg):
+                return g_2, g, fg_2, fg
+
+            index = index + 1
+
+    # def Phase2(self):
+
+    def RunSearch(self):
+        I_Lower, I_Upper = self.Phase1(*self.__delta)
+        Interval = I_Upper - I_Lower
+
+        if (Interval < self.__eps):
+            x = (I_Upper + I_Lower)/2
+            return x
+
+        MaxIter = 0
+        while(True):
+            if ((0.61893**MaxIter) <= (self.__eps/Interval)):
+                break
+            MaxIter = MaxIter + 1
+
+        
+
+
+
+
+
+
+
 class PyLineSearch:
     def __init__(self, delta=0.1):
         self.__FibCoe = 1.618

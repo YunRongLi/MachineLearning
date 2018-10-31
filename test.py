@@ -3,16 +3,24 @@ import matplotlib.pyplot as plt
 
 from PyLineSearch import PyLineSearch
 
-def func(x):
+def TestLineFun1(x):
     return x**4 - 14 * x**3 + 60 * x**2 - 70 * x
 
+def TestLineFun2(x):
+    return (0.65-0.75/(1+x**2))-0.65*x*np.arctan2(1,x)
+
+def TestLineFun3(x):
+    return -(108*x-x**3)/4
+
 def DetermineMin():
-    func1 = func
+    func1 = TestLineFun3
     Searcher = PyLineSearch()
     finalrange = 0.3
     X_min_golden = Searcher.Golden(func1, finalrange)
     X_min_fib = Searcher.Fibonacci(func1, finalrange, 0.1)
     Phase1 = Searcher.GetPhase1Interval()
+
+    
 
     t1 = np.arange(Phase1[0], Phase1[1], finalrange/10)
     plt.figure(1)
