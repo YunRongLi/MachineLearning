@@ -54,7 +54,7 @@ class CGSSearch:
         if (fg_1 >= fg_2):
             print('---Uncertainty Interval---')
             print('Lower: '+ g_2, ' ,Upper: ', g_1)
-            return g_2, g_1, fg_2, fg_1
+            return np.array([[g_2, np.nan, g_1], [fg_2, np.nan, fg_1]])
 
         index = 2
         #print('------------Phase 1 Start------------')
@@ -73,33 +73,82 @@ class CGSSearch:
                 fg   = self.__costfunc(g)
 
             if (fg_2 > fg_1 and fg_1 < fg):
-                return g_2, g, fg_2, fg
+                return np.array([[g_2, g_1, g], [fg_2, fg_1, fg]])
 
             index = index + 1
 
-    # def Phase2(self):
-
-    def RunSearch(self):
-        I_Lower, I_Upper = self.Phase1(*self.__delta)
+    def Phase2(self, phase1):
+        rho = 0.382
+        I_Upper = phase1[0, 0]
+        I_Lower = phase1[0, 2]
         Interval = I_Upper - I_Lower
-
         if (Interval < self.__eps):
-            x = (I_Upper + I_Lower)/2
-            return x
+            return (I_Upper + I_Lower)/2
 
         MaxIter = 0
         while(True):
             if ((0.61893**MaxIter) <= (self.__eps/Interval)):
                 break
             MaxIter = MaxIter + 1
-
         
+        alpha = 0
+        beta  = 0
+        f_alpha = 0
+        f_beta = 0
+        bound = BoundaryChange.Nochange
 
+        for index in range(0, MaxIter):
+            if (index == 0):
+                if (phase1[0, 1] != np.nan):
+                    alpha = phase1[0, 1]
+                    beta  = I_Lower + (1 - rho) * Interval
+                    f_alpha = phase1[1, 1] 
+                    f_beta = self.__costfunc(beta)
 
+                else:
+                    alpha = I_Lower + rho * Interval
+                    beta  = I_Lower + (1 - rho) * Interval
+                    f_alpha = self.__costfunc(alpha)
+                    f_beta  = self.__costfunc(beta)
 
+            else:
+                if (bound == BoundaryChange.Lower):
+                    alpha = beta
+                    f_alpha = f_beta
+                    beta = I_Lower + (1 - rho) * Interval
+                    f_beta = self.__costfunc(beta)
+                elif (bound == BoundaryChange.Upper):
+                    beta = alpha 
+                    f_beta = f_alpha
+                    alpha = I_Lower + rho * Interval
+                    f_alpha = self.__costfunc(alpha)
+                else:
+                    alpha = I_Lower + rho * Interval
+                    beta = I_Upper + (1 - rho) * Interval
+                    f_alpha = self.__costfunc(alpha)
+                    f_beta = self.__costfunc(beta)                
 
+            if (f_alpha < f_beta):
+                I_Upper = beta
+                bound = BoundaryChange.Upper
+            elif(f_alpha > f_beta):
+                I_Lower = alpha
+                bound = BoundaryChange.Lower
+            else:
+                I_Lower = alpha
+                I_Upper = beta
+                bound   = BoundaryChange.Both
 
+            Interval = I_Upper - I_Lower
+            print('CGSSearch - Phase[2]: Upper: ', I_Upper, ' Lower: ', I_Lower)
+        return (I_Upper + I_Lower) / 2        
 
+    def RunSearch(self):
+        Phase1 = self.Phase1()
+        print('CGSSearch - Phase[1]: Upper: ', Phase1[0, 2], ' Lower: ', Phase1[0, 0])
+        x = self.Phase2(Phase1)
+        
+        return x
 
 class PyLineSearch:
     def __init__(self, delta=0.1):
