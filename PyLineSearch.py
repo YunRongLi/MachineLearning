@@ -7,13 +7,7 @@ class BoundaryChange(Enum):
     Lower = 2
     Both = 3
 
-def FibSequence(n):
-    if n < 2:
-        return 1
-    else:
-        return FibSequence(n-1) + FibSequence(n-2)
-
-class CGSSearch:
+class CGSSearch(object):
     def __init__(self, costfunc, x=0, delta=0.1, eps=0.01):
         self.__FibCoe = 1.618
         self.__x = x
@@ -24,16 +18,28 @@ class CGSSearch:
     def set_costfunc(self, costfunc):
         self.__costfunc = costfunc
 
+    def get_costfunc(self):
+        return self.__costfunc
+
     def set_x(self, x):
         self.__x = x
+
+    def get_x(self):
+        return self.__x
 
     def set_delta(self, delta):
         self.__delta = delta
 
+    def get_delta(self):
+        return self.__delta
+
     def set_eps(self, eps):
         self.__eps = eps
 
-    def __Step(self, N):
+    def get_eps(self):
+        return self.__eps
+
+    def Step(self, N):
         Step = 0
         for index in range(0, N+1):
             Step = Step + self.__delta * self.__FibCoe**index
@@ -60,18 +66,17 @@ class CGSSearch:
         #print('------------Phase 1 Start------------')
         while(True):
             if (index == 2):
-                g = self.__Step(index)
+                g = self.Step(index)
                 fg   = self.__costfunc(g)
-
             else:
                 g_2 = g_1
                 g_1 = g
-                g   = self.__Step(index)
+                g   = self.Step(index)
 
                 fg_2 = fg_1
                 fg_1 = fg
                 fg   = self.__costfunc(g)
-
+                
             if (fg_2 > fg_1 and fg_1 < fg):
                 return np.array([[g_2, g_1, g], [fg_2, fg_1, fg]])
 
@@ -79,8 +84,8 @@ class CGSSearch:
 
     def Phase2(self, phase1):
         rho = 0.382
-        I_Upper = phase1[0, 0]
-        I_Lower = phase1[0, 2]
+        I_Lower = phase1[0, 0]
+        I_Upper = phase1[0, 2]
         Interval = I_Upper - I_Lower
         if (Interval < self.__eps):
             return (I_Upper + I_Lower)/2
@@ -89,10 +94,12 @@ class CGSSearch:
         while(True):
             if ((0.61893**MaxIter) <= (self.__eps/Interval)):
                 break
-            MaxIter = MaxIter + 1
-        
+            MaxIter += 1
+
+        print('Max Iter: ', MaxIter)
+
         alpha = 0
-        beta  = 0
+        beta = 0
         f_alpha = 0
         f_beta = 0
         bound = BoundaryChange.Nochange
@@ -101,15 +108,15 @@ class CGSSearch:
             if (index == 0):
                 if (phase1[0, 1] != np.nan):
                     alpha = phase1[0, 1]
-                    beta  = I_Lower + (1 - rho) * Interval
-                    f_alpha = phase1[1, 1] 
+                    beta = I_Lower + (1 - rho) * Interval
+                    f_alpha = phase1[1, 1]
                     f_beta = self.__costfunc(beta)
 
                 else:
                     alpha = I_Lower + rho * Interval
-                    beta  = I_Lower + (1 - rho) * Interval
+                    beta = I_Lower + (1 - rho) * Interval
                     f_alpha = self.__costfunc(alpha)
-                    f_beta  = self.__costfunc(beta)
+                    f_beta = self.__costfunc(beta)
 
             else:
                 if (bound == BoundaryChange.Lower):
@@ -120,364 +127,134 @@ class CGSSearch:
                 elif (bound == BoundaryChange.Upper):
                     beta = alpha 
                     f_beta = f_alpha
-                    alpha = I_Lower + rho * Interval
+                    alpha = I_Lower + (1 - rho) * Interval
                     f_alpha = self.__costfunc(alpha)
                 else:
                     alpha = I_Lower + rho * Interval
-                    beta = I_Upper + (1 - rho) * Interval
+                    beta = I_Lower + (1 - rho) * Interval
                     f_alpha = self.__costfunc(alpha)
-                    f_beta = self.__costfunc(beta)                
-
+                    f_beta = self.__costfunc(beta)
+            
             if (f_alpha < f_beta):
                 I_Upper = beta
                 bound = BoundaryChange.Upper
-            elif(f_alpha > f_beta):
+            elif (f_alpha > f_beta):
                 I_Lower = alpha
                 bound = BoundaryChange.Lower
             else:
                 I_Lower = alpha
                 I_Upper = beta
-                bound   = BoundaryChange.Both
-
+                bound = BoundaryChange.Both
+            
             Interval = I_Upper - I_Lower
-            print('CGSSearch - Phase[2]: Upper: ', I_Upper, ' Lower: ', I_Lower)
-        return (I_Upper + I_Lower) / 2        
+
+        return (I_Upper + I_Lower)/2
 
     def RunSearch(self):
         Phase1 = self.Phase1()
-        print('CGSSearch - Phase[1]: Upper: ', Phase1[0, 2], ' Lower: ', Phase1[0, 0])
-        x = self.Phase2(Phase1)
-        
-        return x
+        print('CGSSearch Phase 1 Upper: ', Phase1[0, 0], 'Lower: ', Phase1[0,2])
+        X = self.Phase2(Phase1)
+        return X
 
-class PyLineSearch:
-    def __init__(self, delta=0.1):
-        self.__FibCoe = 1.618
-        self.__rho    = 0.382
-        self.__delta = delta
-        self.__phase1Interval = [0, 0]
+class CFiSearch(CGSSearch):
+    def __init__(self, costfunc, x=0, delta=0.1, eps=0.01):
+        super(CFiSearch, self).__init__(costfunc, x, delta, eps)
 
-    def __Step(self, N):
-        Step = 0
-        for index in range(0, N+1):
-            Step = Step + self.__delta * self.__FibCoe**index
-        return Step
+    def FibSequence(self,n):
+        if n < 2:
+            return 1
+        else:
+            return self.FibSequence(n-1) + self.FibSequence(n-2)
 
-    def Golden(self, func, FinalRange):
-        fg_2 = 0
-        fg_1 = 0
-        fg   = 0
-        g_2 = 0
-        g_1 = 0
-        g   = 0
+    def Phase2(self, phase1):
+        print('CFiSearcch Phase 2 Start')
+        I_Lower = phase1[0, 0]
+        I_Upper = phase1[0, 2]
+        Interval = I_Upper - I_Lower
+        if (Interval < self.get_eps()):
+            return (I_Upper + I_Lower)/2
 
-        Interval_Upper = 0
-        Interval_Lower = 0
-
-        #Phase 1 Find Interval of Interest
-        index = 2
-        print('------------Phase 1 Start------------')
+        MaxIter = 0
         while(True):
-            if (index == 2):
-                g_2 = self.__Step(0)
-                g_1 = self.__Step(index-1)
-                g   = self.__Step(index)
-
-                fg_2 = func(0)
-                fg_1 = func(g_1)
-                fg   = func(g)
-
-                if (fg_2 > fg_1 and fg_1 < fg):
-                    Interval_Lower = 0
-                    Interval_Upper = g
-                    break
-            else:
-                g_2 = self.__Step(index-2)
-                g_1 = self.__Step(index-1)
-                g   = self.__Step(index)
-
-                fg_2 = func(g_2)
-                fg_1 = func(g_1)
-                fg   = func(g)
-
-                if (fg_2 > fg_1 and fg_1 < fg):
-                    Interval_Lower = g_2
-                    Interval_Upper = g
-                    break
-
-            index = index + 1
-
-        self.__phase1Interval[0] = Interval_Lower
-        self.__phase1Interval[1] = Interval_Upper
-
-        print('Uncertainty Interval Lower: ', Interval_Lower , ' Upper: ', Interval_Upper)
-        print('------------Phase 1 Done-------------')
-
-        #Phase 2 
-        print('------------Phase 2 Start------------')
-        Interval = Interval_Upper - Interval_Lower
-        if (Interval < FinalRange):
-            x = (Interval_Upper + Interval_Lower)/2
-            return x
-
-        Iteration_N = 0
-        while(True):
-            if ((0.61803**Iteration_N) <= (FinalRange/Interval)):
+            if ((0.61893**MaxIter) <= (self.get_eps()/Interval)):
                 break
-            Iteration_N = Iteration_N + 1
-
-        print('------Start Iterate----- Steps: ', Iteration_N)
-
-        alpha = 0
-        beta = 0
-        f_alpha = 0
-        f_beta = 0
-        bound = BoundaryChange.Nochange
-
-        for index in range(0, Iteration_N):
-            print('Step:',index)
-            if (index == 0):
-                alpha = g_1
-                beta = Interval_Lower + (1 - self.__rho) * Interval
-                f_alpha = fg_1
-                f_beta = func(beta)
-                if (f_alpha < f_beta):
-                    Interval_Upper = beta
-                    bound = BoundaryChange.Upper
-                    print('Upper Changed, Upper: ', Interval_Upper)
-                elif (f_alpha > f_beta):
-                    Interval_Lower = g_1
-                    bound = BoundaryChange.Lower
-                    print('Lower Changed, Lower: ', Interval_Lower)
-                else:
-                    Interval_Lower = g_1
-                    Interval_Upper = beta
-                    bound = BoundaryChange.Both
-                    print('Both Changed, Lower: ', Interval_Lower, ' ,Upper: ', Interval_Upper)
-                
-                Interval = Interval_Upper - Interval_Lower
-            else:
-                if (bound == BoundaryChange.Lower):
-                    alpha = beta
-                    f_alpha = f_beta
-                    beta = Interval_Lower + (1 - self.__rho) * Interval
-                    f_beta = func(beta)
-
-                elif(bound == BoundaryChange.Upper):
-                    beta = alpha
-                    f_beta = f_alpha
-                    alpha = Interval_Lower + self.__rho * Interval
-                    f_alpha = func(alpha)
-
-                else:
-                    alpha = Interval_Lower + self.__rho * Interval
-                    beta  = Interval_Lower + (1 - self.__rho) * Interval
-                    f_alpha = func(alpha)
-                    f_beta  = func(beta)
-
-                if (f_alpha < f_beta):
-                    Interval_Upper = beta
-                    bound = BoundaryChange.Upper
-                    print('Upper Changed, Upper: ', Interval_Upper)
-                elif(f_alpha > f_beta):
-                    Interval_Lower = alpha
-                    bound = BoundaryChange.Lower
-                    print('Lower Changed, Lower: ', Interval_Lower)
-                else:
-                    Interval_Lower = alpha
-                    Interval_Upper = beta
-                    bound = BoundaryChange.Both
-                    print('Both Changed, Lower: ', Interval_Lower, ' ,Upper: ', Interval_Upper)
-
-                Interval = Interval_Upper - Interval_Lower
-
-        print('Uncertainty Interval Lower: ', Interval_Lower , ' Upper: ', Interval_Upper)
-        print('Interval: ', Interval)
-        print('------------Phase 2 Done------------')
-
-        x = (Interval_Lower + Interval_Upper) / 2
-        return x
-
-    def Fibonacci(self, func, FinalRange, epsilon=0.1):
-        fg_2 = 0
-        fg_1 = 0
-        fg   = 0
-        g_2 = 0
-        g_1 = 0
-        g   = 0
-
-        Interval_Upper = 0
-        Interval_Lower = 0
-
-        #Phase 1 Find Interval of Interest
-        index = 2
-        print('------------Phase 1 Start------------')
-        while(True):
-            if (index == 2):
-                g_2 = self.__Step(0)
-                g_1 = self.__Step(index-1)
-                g   = self.__Step(index)
-
-                fg_2 = func(0)
-                fg_1 = func(g_1)
-                fg   = func(g)
-
-                if (fg_2 > fg_1 and fg_1 < fg):
-                    Interval_Lower = 0
-                    Interval_Upper = g
-                    break
-            else:
-                g_2 = self.__Step(index-2)
-                g_1 = self.__Step(index-1)
-                g   = self.__Step(index)
-
-                fg_2 = func(g_2)
-                fg_1 = func(g_1)
-                fg   = func(g)
-
-                if (fg_2 > fg_1 and fg_1 < fg):
-                    Interval_Lower = g_2
-                    Interval_Upper = g
-                    break
-
-            index = index + 1
-
-        self.__phase1Interval[0] = Interval_Lower
-        self.__phase1Interval[1] = Interval_Upper
-
-        print('Uncertainty Interval Lower: ', Interval_Lower , ' Upper: ', Interval_Upper)
-        print('------------Phase 1 Done-------------')
-
-        Interval = Interval_Upper - Interval_Lower
-        if (Interval < FinalRange):
-            x = (Interval_Upper + Interval_Lower)/2
-            return x
-        
-        Iteration_N = 0
-        while(True):
-            Fn = FibSequence(Iteration_N+1)
-            if (Fn >= (1+ 2* epsilon) * (Interval/FinalRange)):
-               break
-            Iteration_N = Iteration_N + 1
-
-        print('------Start Iterate----- Steps: ', Iteration_N)
+            MaxIter += 1
+        print('Max Iter: ', MaxIter)
 
         alpha = 0
         beta = 0
         f_alpha = 0
         f_beta = 0
         bound = BoundaryChange.Nochange
+        func = self.get_costfunc()
 
-        for index in range(0, Iteration_N):
+        for index in range(0, MaxIter):
             if (index == 0):
-                rho = 1 - (FibSequence(Iteration_N) / FibSequence(Iteration_N+1))
-                print('rho: ', rho)
-                alpha = Interval_Lower + rho * Interval
-                beta  = Interval_Lower + (1 - rho) * Interval
+                rho = 1 - (self.FibSequence(MaxIter)/ self.FibSequence(MaxIter+1))
+                alpha = I_Lower + rho * Interval
+                beta = I_Lower + (1 - rho) * Interval
                 f_alpha = func(alpha)
-                f_beta  = func(beta)
-                if (f_alpha < f_beta):
-                    Interval_Upper = beta
-                    bound = BoundaryChange.Upper
-                    print('Upper Changed, Upper: ', Interval_Upper)
-                elif (f_alpha > f_beta):
-                    Interval_Lower = alpha
-                    bound = BoundaryChange.Lower
-                    print('Lower Changed, Lower: ', Interval_Lower)
-                else:
-                    Interval_Lower = alpha
-                    Interval_Upper = beta
-                    bound = BoundaryChange.Both
-                    print('Both Changed, Lower: ', Interval_Lower, ' ,Upper: ', Interval_Upper)
-                
-                Interval = Interval_Upper - Interval_Lower
+                f_alpha = func(alpha)
+                f_beta = func(beta)
 
-            elif (index == (Iteration_N-1)):
-                rho = 0.5 - epsilon/2
-                print('rho: ', rho)
+            elif (index == (MaxIter-1)):
+                rho = 0.5 - self.get_eps()
                 if (bound == BoundaryChange.Lower):
                     alpha = beta
                     f_alpha = f_beta
-                    beta = Interval_Lower + (1 - rho) * Interval
+                    beta = I_Lower + (1 - rho) * Interval
                     f_beta = func(beta)
 
-                elif(bound == BoundaryChange.Upper):
-                    beta = alpha
+                elif (bound == BoundaryChange.Upper):
+                    beta = alpha 
                     f_beta = f_alpha
-                    alpha = Interval_Lower + rho * Interval
+                    alpha = I_Lower + rho * Interval
                     f_alpha = func(alpha)
 
                 else:
-                    alpha = Interval_Lower + rho * Interval
-                    beta  = Interval_Lower + (1 - rho) * Interval
+                    alpha = I_Lower + rho * Interval
+                    beta = I_Lower + (1 - rho) * Interval
                     f_alpha = func(alpha)
-                    f_beta  = func(beta)
-
-                if (f_alpha < f_beta):
-                    Interval_Upper = beta
-                    bound = BoundaryChange.Upper
-                    print('Upper Changed, Upper: ', Interval_Upper)
-                elif(f_alpha > f_beta):
-                    Interval_Lower = alpha
-                    bound = BoundaryChange.Lower
-                    print('Lower Changed, Lower: ', Interval_Lower)
-                else:
-                    Interval_Lower = alpha
-                    Interval_Upper = beta
-                    bound = BoundaryChange.Both
-                    print('Both Changed, Lower: ', Interval_Lower, ' ,Upper: ', Interval_Upper)
-
-                Interval = Interval_Upper - Interval_Lower
+                    f_beta = func(beta)
 
             else:
-                rho = 1 - (FibSequence(Iteration_N-index)/ FibSequence(Iteration_N-index+1))
-                print('rho: ', rho)
+                rho = 1 - (self.FibSequence(MaxIter-index)/ self.FibSequence(MaxIter-index+1))
                 if (bound == BoundaryChange.Lower):
                     alpha = beta
                     f_alpha = f_beta
-                    beta = Interval_Lower + (1 - rho) * Interval
+                    beta = I_Lower + (1 - rho) * Interval
                     f_beta = func(beta)
 
-                elif(bound == BoundaryChange.Upper):
-                    beta = alpha
+                elif (bound == BoundaryChange.Upper):
+                    beta = alpha 
                     f_beta = f_alpha
-                    alpha = Interval_Lower + rho * Interval
+                    alpha = I_Lower + rho * Interval
                     f_alpha = func(alpha)
 
                 else:
-                    alpha = Interval_Lower + rho * Interval
-                    beta  = Interval_Lower + (1 - rho) * Interval
+                    alpha = I_Lower + rho * Interval
+                    beta = I_Lower + (1 - rho) * Interval
                     f_alpha = func(alpha)
-                    f_beta  = func(beta)
+                    f_beta = func(beta)
 
-                if (f_alpha < f_beta):
-                    Interval_Upper = beta
-                    bound = BoundaryChange.Upper
-                    print('Upper Changed, Upper: ', Interval_Upper)
-                elif(f_alpha > f_beta):
-                    Interval_Lower = alpha
-                    bound = BoundaryChange.Lower
-                    print('Lower Changed, Lower: ', Interval_Lower)
-                else:
-                    Interval_Lower = alpha
-                    Interval_Upper = beta
-                    bound = BoundaryChange.Both
-                    print('Both Changed, Lower: ', Interval_Lower, ' ,Upper: ', Interval_Upper)
+            if (f_alpha < f_beta):
+                I_Upper = beta
+                bound = BoundaryChange.Upper
+            elif (f_alpha > f_beta):
+                I_Lower = alpha
+                bound = BoundaryChange.Lower
+            else:
+                I_Lower = alpha
+                I_Upper = beta
+                bound = BoundaryChange.Both
 
-                Interval = Interval_Upper - Interval_Lower
+            Interval = I_Upper - I_Lower
 
-        print('Uncertainty Interval Lower: ', Interval_Lower , ' Upper: ', Interval_Upper)
-        print('Interval: ', Interval)
-        print('------------Phase 2 Done------------')
+        return (I_Lower + I_Upper) / 2
 
-        x = (Interval_Lower + Interval_Upper) / 2
-        return x
-
-    def GetPhase1Interval(self):
-        return self.__phase1Interval
+    def RunSearch(self):
         
-                        
-
-
-
-
+        Phase1 = self.Phase1()
+        print('CFiSearch Phase 1 Upper: ', Phase1[0, 0], 'Lower: ', Phase1[0, 2])
+        X = self.Phase2(Phase1)
+        return X
