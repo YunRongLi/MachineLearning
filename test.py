@@ -16,23 +16,23 @@ def TestLineFun3(x):
 
 def DetermineMin():
     func1 = TestLineFun1
-    CGSSearcher = CGSSearch(func1, 0, 0.1, 0.01)
-    CFiSearcher = CFiSearch(func1, 0, 0.1, 0.01)
+    CGSSearcher = CGSSearch(func1, 0, 0.1, 0.1)
+    CFiSearcher = CFiSearch(func1, 0, 0.1, 0.1)
     #finalrange = 0.3
     gsX = CGSSearcher.RunSearch()
     fiX = CFiSearcher.RunSearch()
     gsf_X = func1(gsX)
     fif_x = func1(fiX)
-
     print('GS X: ',  gsX, 'GS F(X): ', gsf_X)
     print('Fi X: ', fiX, 'Fi F(X): ', fif_x)
-    # plt.figure(1)
-    # plt.xlabel('x')
-    # plt.ylabel('f(x)')
-    # plt.plot(t1, func1(t1), 'k', X_min_golden, func1(X_min_golden), 'bo', X_min_fib, func1(X_min_fib), 'ro')
-    # plt.legend(('f(x)', 'Golden', 'Fibonacci'), loc='lower right', shadow=True)
-    # plt.grid(True)
-    # plt.show()
+    t1 = np.arange(1, 8, 0.01)
+    plt.figure(1)
+    plt.xlabel('x')
+    plt.ylabel('f(x)')
+    plt.plot(t1, func1(t1), 'k', gsX, gsf_X, 'bo', fiX, fif_x, 'ro')
+    plt.legend(('f(x)', 'Golden', 'Fibonacci'), loc='lower right', shadow=True)
+    plt.grid(True)
+    plt.show()
 
 if __name__ == "__main__":
     DetermineMin()

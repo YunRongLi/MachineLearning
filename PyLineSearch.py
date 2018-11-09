@@ -7,11 +7,11 @@ class BoundaryChange(Enum):
     Lower = 2
     Both = 3
 
-class CGSSearch(object):
-    def __init__(self, costfunc, x=0, delta=0.1, eps=0.01):
+class CGSSearch():
+    def __init__(self, costfunc, x=0, d=1, eps=0.01):
         self.__FibCoe = 1.618
         self.__x = x
-        self.__delta = delta
+        self.__d = d
         self.__eps = eps
         self.__costfunc = costfunc
 
@@ -55,40 +55,34 @@ class CGSSearch(object):
     def eps(self, eps):
         self.__eps = eps
 
-    def Step(self, N):
-        Step = 0
-        for index in range(0, N+1):
-            Step = Step + self.__delta * self.FibCoe**index
-        return Step
-
     def Phase1(self):
+        ## I
+        delta = 0.1
         func = self.costfunc
-        g_2 = 0
-        g_1 = 0
-        g   = 0        
-        fg_2 = 0
-        fg_1 = 0
+
+        g_2 = self.x
+        g_1 = self.x + delta
+        g   = 0   
+
+        fg_2 = func(g_2)
+        fg_1 = func(g_1)
         fg   = 0
         
-        fg_2 = func(g_2)
-        g_1 = self.__delta
-        fg_1 = func(g_1)
-
         if (fg_1 >= fg_2):
             print('---Uncertainty Interval---')
             print('Lower: '+ g_2, ' ,Upper: ', g_1)
             return np.array([[g_2, np.nan, g_1], [fg_2, np.nan, fg_1]])
 
-        index = 2
+        index = 1
         #print('------------Phase 1 Start------------')
         while(True):
-            if (index == 2):
-                g = self.Step(index)
-                fg   = func(g)
+            if (index == 1):
+                g = g_1 + delta* self.FibCoe**index
+                fg = func(g)
             else:
                 g_2 = g_1
                 g_1 = g
-                g   = self.Step(index)
+                g   = g_1 + delta* self.FibCoe**index
 
                 fg_2 = fg_1
                 fg_1 = fg
@@ -105,12 +99,12 @@ class CGSSearch(object):
         I_Lower = phase1[0, 0]
         I_Upper = phase1[0, 2]
         Interval = I_Upper - I_Lower
-        if (Interval < self.__eps):
+        if (Interval < self.eps):
             return (I_Upper + I_Lower)/2
 
         MaxIter = 0
         while(True):
-            if ((0.61893**MaxIter) <= (self.__eps/Interval)):
+            if ((0.61893**MaxIter) <= (self.eps/Interval)):
                 break
             MaxIter += 1
 
@@ -154,12 +148,15 @@ class CGSSearch(object):
                     f_beta = func(beta)
             
             if (f_alpha < f_beta):
+                print('Iter[', index, ']', ' Upper Bound Changed: ', I_Upper, '->', beta)
                 I_Upper = beta
                 bound = BoundaryChange.Upper
             elif (f_alpha > f_beta):
+                print('Iter[', index, ']', ' Lower Bound Changed: ', I_Lower, '->', alpha)
                 I_Lower = alpha
                 bound = BoundaryChange.Lower
             else:
+                print('Iter[', index, ']', ' All Bound Changed, Upper: ', I_Upper, '->', beta, ', Lower: ', I_Lower, '->', alpha)
                 I_Lower = alpha
                 I_Upper = beta
                 bound = BoundaryChange.Both
@@ -175,8 +172,8 @@ class CGSSearch(object):
         return X
 
 class CFiSearch(CGSSearch):
-    def __init__(self, costfunc, x=0, delta=0.1, eps=0.01):
-        super(CFiSearch, self).__init__(costfunc, x, delta, eps)
+    def __init__(self, costfunc, x=0, d=0.1, eps=0.01):
+        super(CFiSearch, self).__init__(costfunc, x, d, eps)
 
     def FibSequence(self,n):
         if n < 2:
@@ -256,12 +253,15 @@ class CFiSearch(CGSSearch):
                     f_beta = func(beta)
 
             if (f_alpha < f_beta):
+                print('Iter[', index, ']', ' Upper Bound Changed: ', I_Upper, '->', beta)
                 I_Upper = beta
                 bound = BoundaryChange.Upper
             elif (f_alpha > f_beta):
+                print('Iter[', index, ']', ' Lower Bound Changed: ', I_Lower, '->', alpha)
                 I_Lower = alpha
-                bound = BoundaryChange.Lower
+                bound = BoundaryChange.Lower   
             else:
+                print('Iter[', index, ']', ' All Bound Changed, Upper: ', I_Upper, '->', beta, ', Lower: ', I_Lower, '->', alpha)
                 I_Lower = alpha
                 I_Upper = beta
                 bound = BoundaryChange.Both
