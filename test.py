@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 from PyLineSearch import PyLineSearch
 from PyLineSearch import CGSSearch
@@ -20,7 +21,11 @@ def DetermineMin():
     
     Searcher = CGSSearch(func1,0, 0.1, 0.01)
     #finalrange = 0.3
+    tStart = time.time()
     X = Searcher.RunSearch()
+    tEnd = time.time()
+
+    print("Time cost:  %f sec" %(tEnd - tStart))
     #X_min_fib = Searcher.Fibonacci(func1, finalrange, 0.1)
     #Phase1 = Searcher.GetPhase1Interval()
 
