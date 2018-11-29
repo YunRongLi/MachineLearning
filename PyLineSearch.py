@@ -40,12 +40,12 @@ class CGSSearch():
         self.__x = x    
 
     @property
-    def delta(self):
-        return self.__delta
+    def d(self):
+        return self.__d
 
-    @delta.setter
-    def delta(self, delta):
-        self.__delta = delta
+    @d.setter
+    def d(self, d):
+        self.__d = d
 
     @property
     def eps(self):
@@ -275,3 +275,4 @@ class CFiSearch(CGSSearch):
         print('CFiSearch Phase 1 Upper: ', Phase1[0, 0], 'Lower: ', Phase1[0, 2])
         X = self.Phase2(Phase1)
         return X
+
