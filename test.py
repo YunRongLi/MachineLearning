@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-from PyLineSearch import PyLineSearch
 from PyLineSearch import CGSSearch
+from PyLineSearch import CFiSearch
 
 def TestLineFun1(x):
     return x**4 - 14 * x**3 + 60 * x**2 - 70 * x
@@ -14,12 +14,16 @@ def TestLineFun2(x):
 def TestLineFun3(x):
     return -(108*x-x**3)/4
 
+def Test2VarFun3(x):
+    return -x[0]*x[1]*np.exp(-x[0]**-x[1]**2)
+    # x* = [0.7071, 0.7071] or x* = [-0.7071, -0.7071], f(x*) = -0.1839
+
 def DetermineMin():
-    func1 = TestLineFun1
+    func1 = Test2VarFun3
     #func2 = TestLineFun2
     #func3 = TestLineFun3
     
-    Searcher = CGSSearch(func1,0, 0.1, 0.01)
+    Searcher = CGSSearch(func1,[0, 0], 0.1, 0.01)
     #finalrange = 0.3
     tStart = time.time()
     X = Searcher.RunSearch()
