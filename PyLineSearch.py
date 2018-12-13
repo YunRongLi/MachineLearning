@@ -56,21 +56,28 @@ class CGSSearch():
         self.__eps = eps
 
     def Phase1(self):
-        ## I
-        delta = 0.1
         func = self.costfunc
 
-        g_2 = self.x
-        g_1 = self.x + delta
+        if (type(self.x) == list):
+            delta = np.array([0.1] * len(self.x))
+        else:
+            delta = 0.1
+
+        g_2 = np.array(self.x)
+        print("g_2", g_2)
+        g_1 = np.add(self.x, delta)
+        print("g_1", g_1)
         g   = 0   
 
         fg_2 = func(g_2)
+        print("fg_2", fg_2)
         fg_1 = func(g_1)
+        print("fg_1", fg_1)
         fg   = 0
         
         if (fg_1 >= fg_2):
             print('---Uncertainty Interval---')
-            print('Lower: '+ g_2, ' ,Upper: ', g_1)
+            print('Lower: ', g_2, ' ,Upper: ', g_1)
             return np.array([[g_2, np.nan, g_1], [fg_2, np.nan, fg_1]])
 
         index = 1
@@ -99,6 +106,7 @@ class CGSSearch():
         I_Lower = phase1[0, 0]
         I_Upper = phase1[0, 2]
         Interval = I_Upper - I_Lower
+        print("Interval: ", Interval)
         if (Interval < self.eps):
             return (I_Upper + I_Lower)/2
 
