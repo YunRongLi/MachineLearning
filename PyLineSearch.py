@@ -58,14 +58,11 @@ class CGSSearch():
     def Phase1(self):
         func = self.costfunc
 
-        if (type(self.x) == list):
-            delta = np.array([0.1] * len(self.x))
-        else:
-            delta = 0.1
+        delta = 0.1
 
-        g_2 = np.array(self.x)
+        g_2 = self.x
         print("g_2", g_2)
-        g_1 = np.add(self.x, delta)
+        g_1 = [g_2[i] + delta for i in range(len(g_2))]
         print("g_1", g_1)
         g   = 0   
 
@@ -78,34 +75,35 @@ class CGSSearch():
         if (fg_1 >= fg_2):
             print('---Uncertainty Interval---')
             print('Lower: ', g_2, ' ,Upper: ', g_1)
-            return np.array([[g_2, np.nan, g_1], [fg_2, np.nan, fg_1]])
+            return [g_2, np.nan, g_1, fg_2, np.nan, fg_1]
 
         index = 1
         #print('------------Phase 1 Start------------')
         while(True):
             if (index == 1):
-                g = g_1 + delta* self.FibCoe**index
+                g = [g_1[i] + delta* self.FibCoe**index for i in range(len(g_1))]
                 fg = func(g)
             else:
                 g_2 = g_1
                 g_1 = g
-                g   = g_1 + delta* self.FibCoe**index
-
+                g   = [g_1[i] + delta* self.FibCoe**index for i in range(len(g_1))]
+ 
                 fg_2 = fg_1
                 fg_1 = fg
                 fg   = func(g)
                 
             if (fg_2 > fg_1 and fg_1 < fg):
-                return np.array([[g_2, g_1, g], [fg_2, fg_1, fg]])
+                return [g_2, g_1, g, fg_2, fg_1, fg]
 
             index = index + 1
 
     def Phase2(self, phase1):
         func = self.costfunc
         rho = 0.382
-        I_Lower = phase1[0, 0]
-        I_Upper = phase1[0, 2]
-        Interval = I_Upper - I_Lower
+        I_Lower = phase1[0]
+        I_Upper = phase1[2]
+        print('I_Lower:', I_Lower, 'I_Upper: ', I_Upper)
+        Interval = [I_Upper[i] - I_Lower[i] for i in range(len(I_Lower))]
         print("Interval: ", Interval)
         if (Interval < self.eps):
             return (I_Upper + I_Lower)/2
@@ -175,7 +173,7 @@ class CGSSearch():
 
     def RunSearch(self):
         Phase1 = self.Phase1()
-        print('CGSSearch Phase 1 Upper: ', Phase1[0, 0], 'Lower: ', Phase1[0,2])
+        print('CGSSearch Phase 1 Upper: ', Phase1[0], 'Lower: ', Phase1[2])
         X = self.Phase2(Phase1)
         return X
 
@@ -192,8 +190,8 @@ class CFiSearch(CGSSearch):
     def Phase2(self, phase1):
         print('CFiSearcch Phase 2 Start')
         func = self.costfunc
-        I_Lower = phase1[0, 0]
-        I_Upper = phase1[0, 2]
+        I_Lower = phase1[0].copy()
+        I_Upper = phase1[2].copy()
         Interval = I_Upper - I_Lower
         eps = self.eps
         if (Interval < eps):
@@ -280,7 +278,7 @@ class CFiSearch(CGSSearch):
 
     def RunSearch(self):
         Phase1 = self.Phase1()
-        print('CFiSearch Phase 1 Upper: ', Phase1[0, 0], 'Lower: ', Phase1[0, 2])
+        print('CFiSearch Phase 1 Upper: ', Phase1[0], 'Lower: ', Phase1[2])
         X = self.Phase2(Phase1)
         return X
 

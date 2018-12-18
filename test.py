@@ -23,7 +23,7 @@ def Test2VarFun3(x):
 def DetermineMin():
     func1 = Test2VarFun1
     CGSSearcher = CGSSearch(func1, [0, 0], 0.1, 0.1)
-    #CFiSearcher = CFiSearch(func1, 0, 0.1, 0.1)
+    #CFiSearcher = CFiSearch(func1, [0, 0], 0.1, 0.1)
     #finalrange = 0.3
     x_ = CGSSearcher.RunSearch()
 
