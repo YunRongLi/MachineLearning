@@ -57,40 +57,35 @@ class CGSSearch():
 
     def Phase1(self):
         func = self.costfunc
-
         delta = 0.1
 
-        g_2 = self.x
-        print("g_2", g_2)
-        g_1 = [g_2[i] + delta for i in range(len(g_2))]
-        print("g_1", g_1)
-        g   = 0   
+        g_2 = 0.
+        g_1 = delta
+        g   = 0.   
 
-        fg_2 = func(g_2)
-        print("fg_2", fg_2)
-        fg_1 = func(g_1)
-        print("fg_1", fg_1)
+        fg_2 = func([self.x[i] + g_2 * self.d[i] for i in range(0, len(self.d))])
+        fg_1 = func([self.x[i] + g_1 * self.d[i] for i in range(0, len(self.d))])
         fg   = 0
         
         if (fg_1 >= fg_2):
-            print('---Uncertainty Interval---')
-            print('Lower: ', g_2, ' ,Upper: ', g_1)
-            return [g_2, np.nan, g_1, fg_2, np.nan, fg_1]
+            #print('---Uncertainty Interval---')
+            #print('Lower: ', g_2, ' ,Upper: ', g_1)
+            return [g_2, g_1, fg_2, fg_1]
 
         index = 1
         #print('------------Phase 1 Start------------')
         while(True):
             if (index == 1):
-                g = [g_1[i] + delta* self.FibCoe**index for i in range(len(g_1))]
-                fg = func(g)
+                g = g_1 + delta * self.FibCoe**index
+                fg = func([self.x[i] + g * self.d[i] for i in range(0, len(self.d))])
             else:
                 g_2 = g_1
                 g_1 = g
-                g   = [g_1[i] + delta* self.FibCoe**index for i in range(len(g_1))]
+                g   = g_1 + delta* self.FibCoe**index 
  
                 fg_2 = fg_1
                 fg_1 = fg
-                fg   = func(g)
+                fg   = func([self.x[i] + g * self.d[i] for i in range(0, len(self.d))])
                 
             if (fg_2 > fg_1 and fg_1 < fg):
                 return [g_2, g_1, g, fg_2, fg_1, fg]
@@ -100,11 +95,12 @@ class CGSSearch():
     def Phase2(self, phase1):
         func = self.costfunc
         rho = 0.382
+
         I_Lower = phase1[0]
         I_Upper = phase1[2]
-        print('I_Lower:', I_Lower, 'I_Upper: ', I_Upper)
-        Interval = [I_Upper[i] - I_Lower[i] for i in range(len(I_Lower))]
-        print("Interval: ", Interval)
+        #print('I_Lower:', I_Lower, 'I_Upper: ', I_Upper)
+        Interval = I_Upper - I_Lower
+        #print("Interval: ", Interval)
         if (Interval < self.eps):
             return (I_Upper + I_Lower)/2
 
@@ -114,7 +110,7 @@ class CGSSearch():
                 break
             MaxIter += 1
 
-        print('Max Iter: ', MaxIter)
+        #print('Max Iter: ', MaxIter)
 
         alpha = 0
         beta = 0
@@ -124,45 +120,45 @@ class CGSSearch():
 
         for index in range(0, MaxIter):
             if (index == 0):
-                if (phase1[0, 1] != np.nan):
-                    alpha = phase1[0, 1]
+                if (len(phase1) != 4):
+                    alpha = phase1[1]
                     beta = I_Lower + (1 - rho) * Interval
-                    f_alpha = phase1[1, 1]
-                    f_beta = func(beta)
+                    f_alpha = phase1[4]
+                    f_beta = func([self.x[i] + beta * self.d[i] for i in range(0, len(self.d))])
 
                 else:
                     alpha = I_Lower + rho * Interval
                     beta = I_Lower + (1 - rho) * Interval
-                    f_alpha = func(alpha)
-                    f_beta = func(beta)
+                    f_alpha = func([self.x[i] + alpha * self.d[i] for i in range(0, len(self.d))])
+                    f_beta = func([self.x[i] + beta * self.d[i] for i in range(0, len(self.d))])
 
             else:
                 if (bound == BoundaryChange.Lower):
                     alpha = beta
                     f_alpha = f_beta
                     beta = I_Lower + (1 - rho) * Interval
-                    f_beta = func(beta)
+                    f_beta = func([self.x[i] + beta * self.d[i] for i in range(0, len(self.d))])
                 elif (bound == BoundaryChange.Upper):
                     beta = alpha 
                     f_beta = f_alpha
-                    alpha = I_Lower + (1 - rho) * Interval
-                    f_alpha = func(alpha)
+                    alpha = I_Lower + rho * Interval
+                    f_alpha = func([self.x[i] + alpha * self.d[i] for i in range(0, len(self.d))])
                 else:
                     alpha = I_Lower + rho * Interval
                     beta = I_Lower + (1 - rho) * Interval
-                    f_alpha = func(alpha)
-                    f_beta = func(beta)
+                    f_alpha = func([self.x[i] + alpha * self.d[i] for i in range(0, len(self.d))])
+                    f_beta = func([self.x[i] + beta * self.d[i] for i in range(0, len(self.d))])
             
             if (f_alpha < f_beta):
-                print('Iter[', index, ']', ' Upper Bound Changed: ', I_Upper, '->', beta)
+                #print('Iter[', index, ']', ' Upper Bound Changed: ', I_Upper, '->', beta)
                 I_Upper = beta
                 bound = BoundaryChange.Upper
             elif (f_alpha > f_beta):
-                print('Iter[', index, ']', ' Lower Bound Changed: ', I_Lower, '->', alpha)
+                #print('Iter[', index, ']', ' Lower Bound Changed: ', I_Lower, '->', alpha)
                 I_Lower = alpha
                 bound = BoundaryChange.Lower
             else:
-                print('Iter[', index, ']', ' All Bound Changed, Upper: ', I_Upper, '->', beta, ', Lower: ', I_Lower, '->', alpha)
+                #print('Iter[', index, ']', ' All Bound Changed, Upper: ', I_Upper, '->', beta, ', Lower: ', I_Lower, '->', alpha)
                 I_Lower = alpha
                 I_Upper = beta
                 bound = BoundaryChange.Both
@@ -173,7 +169,6 @@ class CGSSearch():
 
     def RunSearch(self):
         Phase1 = self.Phase1()
-        print('CGSSearch Phase 1 Upper: ', Phase1[0], 'Lower: ', Phase1[2])
         X = self.Phase2(Phase1)
         return X
 
@@ -188,21 +183,21 @@ class CFiSearch(CGSSearch):
             return self.FibSequence(n-1) + self.FibSequence(n-2)
 
     def Phase2(self, phase1):
-        print('CFiSearcch Phase 2 Start')
+        #print('CFiSearcch Phase 2 Start')
         func = self.costfunc
-        I_Lower = phase1[0].copy()
-        I_Upper = phase1[2].copy()
+        I_Lower = phase1[0]
+        I_Upper = phase1[2]
         Interval = I_Upper - I_Lower
-        eps = self.eps
-        if (Interval < eps):
+ 
+        if (Interval < self.eps):
             return (I_Upper + I_Lower)/2
 
         MaxIter = 0
         while(True):
-            if ((0.61893**MaxIter) <= (eps/Interval)):
+            if ((0.61893**MaxIter) <= (self.eps/Interval)):
                 break
             MaxIter += 1
-        print('Max Iter: ', MaxIter)
+        #print('Max Iter: ', MaxIter)
 
         alpha = 0
         beta = 0
@@ -215,8 +210,8 @@ class CFiSearch(CGSSearch):
                 rho = 1 - (self.FibSequence(MaxIter)/ self.FibSequence(MaxIter+1))
                 alpha = I_Lower + rho * Interval
                 beta = I_Lower + (1 - rho) * Interval
-                f_alpha = func(alpha)
-                f_beta = func(beta)
+                f_alpha = func([self.x[i] + alpha * self.d[i] for i in range(0, len(self.d))])
+                f_beta = func([self.x[i] + beta * self.d[i] for i in range(0, len(self.d))])
 
             elif (index == (MaxIter-1)):
                 rho = 0.5 - self.eps
@@ -224,19 +219,19 @@ class CFiSearch(CGSSearch):
                     alpha = beta
                     f_alpha = f_beta
                     beta = I_Lower + (1 - rho) * Interval
-                    f_beta = func(beta)
+                    f_beta = func([self.x[i] + beta * self.d[i] for i in range(0, len(self.d))])
 
                 elif (bound == BoundaryChange.Upper):
                     beta = alpha 
                     f_beta = f_alpha
                     alpha = I_Lower + rho * Interval
-                    f_alpha = func(alpha)
+                    f_alpha = func([self.x[i] + alpha * self.d[i] for i in range(0, len(self.d))])
 
                 else:
                     alpha = I_Lower + rho * Interval
                     beta = I_Lower + (1 - rho) * Interval
-                    f_alpha = func(alpha)
-                    f_beta = func(beta)
+                    f_alpha = func([self.x[i] + alpha * self.d[i] for i in range(0, len(self.d))])
+                    f_beta = func([self.x[i] + beta * self.d[i] for i in range(0, len(self.d))])
 
             else:
                 rho = 1 - (self.FibSequence(MaxIter-index)/ self.FibSequence(MaxIter-index+1))
@@ -244,30 +239,30 @@ class CFiSearch(CGSSearch):
                     alpha = beta
                     f_alpha = f_beta
                     beta = I_Lower + (1 - rho) * Interval
-                    f_beta = func(beta)
+                    f_beta = func([self.x[i] + beta * self.d[i] for i in range(0, len(self.d))])
 
                 elif (bound == BoundaryChange.Upper):
                     beta = alpha 
                     f_beta = f_alpha
                     alpha = I_Lower + rho * Interval
-                    f_alpha = func(alpha)
+                    f_alpha = func([self.x[i] + alpha * self.d[i] for i in range(0, len(self.d))])
 
                 else:
                     alpha = I_Lower + rho * Interval
                     beta = I_Lower + (1 - rho) * Interval
-                    f_alpha = func(alpha)
-                    f_beta = func(beta)
+                    f_alpha = func([self.x[i] + alpha * self.d[i] for i in range(0, len(self.d))])
+                    f_beta = func([self.x[i] + beta * self.d[i] for i in range(0, len(self.d))])
 
             if (f_alpha < f_beta):
-                print('Iter[', index, ']', ' Upper Bound Changed: ', I_Upper, '->', beta)
+                #print('Iter[', index, ']', ' Upper Bound Changed: ', I_Upper, '->', beta)
                 I_Upper = beta
                 bound = BoundaryChange.Upper
             elif (f_alpha > f_beta):
-                print('Iter[', index, ']', ' Lower Bound Changed: ', I_Lower, '->', alpha)
+                #print('Iter[', index, ']', ' Lower Bound Changed: ', I_Lower, '->', alpha)
                 I_Lower = alpha
                 bound = BoundaryChange.Lower   
             else:
-                print('Iter[', index, ']', ' All Bound Changed, Upper: ', I_Upper, '->', beta, ', Lower: ', I_Lower, '->', alpha)
+                #print('Iter[', index, ']', ' All Bound Changed, Upper: ', I_Upper, '->', beta, ', Lower: ', I_Lower, '->', alpha)
                 I_Lower = alpha
                 I_Upper = beta
                 bound = BoundaryChange.Both
@@ -278,7 +273,7 @@ class CFiSearch(CGSSearch):
 
     def RunSearch(self):
         Phase1 = self.Phase1()
-        print('CFiSearch Phase 1 Upper: ', Phase1[0], 'Lower: ', Phase1[2])
+        #print('CFiSearch Phase 1 Upper: ', Phase1[0], 'Lower: ', Phase1[2])
         X = self.Phase2(Phase1)
         return X
 

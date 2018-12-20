@@ -1,8 +1,12 @@
 import numpy as np
+import math
+from PyLineSearch import CFiSearch
+from PyLineSearch import CGSSearch
+
 class CForwardDiff():
     def __init__(self, costfunc, x, dim, eps=1e-5, percent=1e-5):
         self.__costfunc = costfunc
-        self.__x = np.array(x, dtype=float)
+        self.__x = x
         self.__dim = dim
         self.__eps = eps
         self.__percent = percent
@@ -52,7 +56,7 @@ class CForwardDiff():
         fun = self.costfunc
         for index in range(0, self.dim):
             x = self.x.copy()
-            h = x[index] * self.percent + + self.eps
+            h = x[index] * self.percent + self.eps
             x[index] = x[index] + h
             d.append((fun(x)-g)/h)
         
@@ -77,7 +81,7 @@ class CCentralDiff(CForwardDiff):
     def __init__(self, costfunc, x, dim, eps=1e-5, percent=1e-5):
         super(CCentralDiff, self).__init__(costfunc, x, dim, eps, percent)
 
-    def GetGrad(self, g):
+    def GetGrad(self):
         d = []
         fun = self.costfunc
         for index in range(0, self.dim):
@@ -132,6 +136,14 @@ class CGradDecent():
         self.__MinNorm = value
 
     @property
+    def costfunc(self):
+        return self.__costfunc
+
+    @costfunc.setter
+    def costfunc(self, value):
+        self.__costfunc = value
+
+    @property
     def LineSearch(self):
         return self.__LineSearch
 
@@ -147,7 +159,63 @@ class CGradDecent():
     def Gradient(self, value):
         self.Gradient = value
 
-    def RunOptimize(self):
-        if (self.Gradient == 'FiS')
-
+    def Prediction(self, x):
         pass
+
+    def RunOptimize(self, learn_rate=1e-5):
+        x = self.x0.copy()
+        k = 0
+        d = 1
+        learn_rate = learn_rate
+
+        fun = self.costfunc
+
+        if (self.LineSearch == "FiS"):
+            LineSearch = CFiSearch(fun, x, d)
+        else:
+            LineSearch = CGSSearch(fun, x, d)
+
+        if (self.Gradient == 'Forward'):
+            Diff = CForwardDiff(fun, x, self.dim)
+        elif (self.Gradient == 'Backward'):
+            Diff = CBackwardDiff(fun, x, self.dim)
+        else:
+            Diff = CCentralDiff(fun, x, self.dim)
+
+        grad_Magnitude = math.inf
+        
+        while (k < self.MaxIter):
+            print('Optimizer Iter[', k, ']')
+
+            if (k != 0):
+                Diff.x = x 
+                
+            if (self.Gradient != 'Central'):
+                g = fun(x)
+                grad = Diff.GetGrad(g)
+            else:
+                grad = Diff.GetGrad()
+
+            grad_Magnitude = math.sqrt(math.fsum([i*i for i in grad]))
+            #print('||Gradient||: ',grad_Magnitude)
+            if (grad_Magnitude < learn_rate):
+                return x
+
+            d = [-i for i in grad]
+
+            if (k != 0):
+                LineSearch.x = x
+            
+            LineSearch.d = d            
+
+            alpha = LineSearch.RunSearch()
+
+            x = [x[i] + alpha * d[i] for i in range(0, len(x))]
+            #print('X:', x)
+            k += 1
+
+        return x
+
+
+        
+        
