@@ -1,4 +1,3 @@
-import numpy as np
 from enum import Enum
 
 class BoundaryChange(Enum):
@@ -173,7 +172,7 @@ class CGSSearch():
         return X
 
 class CFiSearch(CGSSearch):
-    def __init__(self, costfunc, x=0, d=0.1, eps=0.01):
+    def __init__(self, costfunc, x=0, d=1, eps=0.01):
         super(CFiSearch, self).__init__(costfunc, x, d, eps)
 
     def FibSequence(self,n):
@@ -197,7 +196,9 @@ class CFiSearch(CGSSearch):
             if ((0.61893**MaxIter) <= (self.eps/Interval)):
                 break
             MaxIter += 1
-        #print('Max Iter: ', MaxIter)
+        print('Max Iter: ', MaxIter)
+
+        Fibsqeuence = [self.FibSequence(i) for i in range(0, MaxIter+1)]
 
         alpha = 0
         beta = 0
@@ -207,7 +208,7 @@ class CFiSearch(CGSSearch):
 
         for index in range(0, MaxIter):
             if (index == 0):
-                rho = 1 - (self.FibSequence(MaxIter)/ self.FibSequence(MaxIter+1))
+                rho = 1 - Fibsqeuence[MaxIter-1]/ Fibsqeuence[MaxIter]
                 alpha = I_Lower + rho * Interval
                 beta = I_Lower + (1 - rho) * Interval
                 f_alpha = func([self.x[i] + alpha * self.d[i] for i in range(0, len(self.d))])
@@ -234,7 +235,7 @@ class CFiSearch(CGSSearch):
                     f_beta = func([self.x[i] + beta * self.d[i] for i in range(0, len(self.d))])
 
             else:
-                rho = 1 - (self.FibSequence(MaxIter-index)/ self.FibSequence(MaxIter-index+1))
+                rho = 1 - (Fibsqeuence[MaxIter-index-1]/ Fibsqeuence[MaxIter-index])
                 if (bound == BoundaryChange.Lower):
                     alpha = beta
                     f_alpha = f_beta

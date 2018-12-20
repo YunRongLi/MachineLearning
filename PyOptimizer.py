@@ -1,4 +1,3 @@
-import numpy as np
 import math
 from PyLineSearch import CFiSearch
 from PyLineSearch import CGSSearch
@@ -25,7 +24,7 @@ class CForwardDiff():
 
     @x.setter
     def x(self, value):
-        self.__x = np.array(value, dtype=float)
+        self.__x = value
 
     @property
     def dim(self):
@@ -159,14 +158,10 @@ class CGradDecent():
     def Gradient(self, value):
         self.Gradient = value
 
-    def Prediction(self, x):
-        pass
-
-    def RunOptimize(self, learn_rate=1e-5):
-        x = self.x0.copy()
+    def RunOptimize(self):
+        x = self.x0
         k = 0
         d = 1
-        learn_rate = learn_rate
 
         fun = self.costfunc
 
@@ -198,11 +193,11 @@ class CGradDecent():
 
             grad_Magnitude = math.sqrt(math.fsum([i*i for i in grad]))
             #print('||Gradient||: ',grad_Magnitude)
-            if (grad_Magnitude < learn_rate):
+            if (grad_Magnitude < self.MinNorm):
                 return x
 
             d = [-i for i in grad]
-
+            
             if (k != 0):
                 LineSearch.x = x
             
@@ -211,7 +206,7 @@ class CGradDecent():
             alpha = LineSearch.RunSearch()
 
             x = [x[i] + alpha * d[i] for i in range(0, len(x))]
-            #print('X:', x)
+            print('X:', x)
             k += 1
 
         return x

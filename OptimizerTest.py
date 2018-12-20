@@ -14,7 +14,6 @@ def XORCostFunction(x):
     yd = [0., 1., 1., 0.]
 
     activation = sigmoid
-    #o1 = activation(x[0])
 
     cost = 0
     for i in range(0, len(x1)):
@@ -23,11 +22,6 @@ def XORCostFunction(x):
         y  = activation(x[6] * z1    + x[7] * z2    + x[8])
         MSE = (yd[i] - y)**2
         cost = cost + MSE
-
-    # print('loss: ', cost)
-    # print('Prediction')
-    # print('X:', x)
-    #XORPrediction(x)
 
     return cost
 
@@ -47,10 +41,8 @@ def DetermineMin():
     func = XORCostFunction
     X0 = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
-    
-
-    Optimizer = CGradDecent(func, X0, 9, Gradient='Backward', LineSearch='GSS')
-    X = Optimizer.RunOptimize(learn_rate=1e-4)
+    Optimizer = CGradDecent(func, X0, 9, Gradient='Forward', LineSearch='GSS', MinNorm=0.000001)
+    X = Optimizer.RunOptimize()
     XORPrediction(X)
     
 
