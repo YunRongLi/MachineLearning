@@ -1,4 +1,3 @@
-import numpy as np
 import math
 from PyLineSearch import CFiSearch
 from PyLineSearch import CGSSearch
@@ -25,7 +24,7 @@ class CForwardDiff():
 
     @x.setter
     def x(self, value):
-        self.__x = np.array(value, dtype=float)
+        self.__x = value
 
     @property
     def dim(self):
