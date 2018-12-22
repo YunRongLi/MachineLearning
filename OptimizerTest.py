@@ -23,11 +23,6 @@ def XORCostFunction(x):
         MSE = (yd[i] - y)**2
         cost = cost + MSE
 
-    # print('loss: ', cost)
-    # print('Prediction')
-    # print('X:', x)
-    #XORPrediction(x)
-
     return cost
 
 def XORPrediction(x):
@@ -46,8 +41,8 @@ def DetermineMin():
     func = XORCostFunction
     X0 = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
-    Optimizer = CGradDecent(func, X0, 9, Gradient='Backward', LineSearch='FiS')
-    X = Optimizer.RunOptimize(learn_rate=1e-5)
+    Optimizer = CGradDecent(func, X0, 9, Gradient='Forward', LineSearch='FiS', MinNorm=0.000001)
+    X = Optimizer.RunOptimize()
     XORPrediction(X)
     
 

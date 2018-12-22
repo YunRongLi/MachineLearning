@@ -50,9 +50,10 @@ class CForwardDiff():
     def percent(self, value):
         self.__percent = value  
 
-    def GetGrad(self, g):
+    def GetGrad(self, x):
         d = []
         fun = self.costfunc
+        g = fun(x)
         for index in range(0, self.dim):
             x = self.x.copy()
             h = x[index] * self.percent + self.eps
@@ -65,9 +66,10 @@ class CBackwardDiff(CForwardDiff):
     def __init__(self, costfunc, x, dim, eps=1e-5, percent=1e-5):
         super(CBackwardDiff, self).__init__(costfunc, x, dim, eps, percent)
 
-    def GetGrad(self, g):
+    def GetGrad(self, x):
         d = []
         fun = self.costfunc
+        g = fun(x)
         for index in range(0, self.dim):
             x = self.x.copy()
             h = x[index] * self.percent + self.eps
@@ -80,7 +82,7 @@ class CCentralDiff(CForwardDiff):
     def __init__(self, costfunc, x, dim, eps=1e-5, percent=1e-5):
         super(CCentralDiff, self).__init__(costfunc, x, dim, eps, percent)
 
-    def GetGrad(self):
+    def GetGrad(self,x):
         d = []
         fun = self.costfunc
         for index in range(0, self.dim):
@@ -158,14 +160,10 @@ class CGradDecent():
     def Gradient(self, value):
         self.Gradient = value
 
-    def Prediction(self, x):
-        pass
-
-    def RunOptimize(self, learn_rate=1e-5):
-        x = self.x0.copy()
+    def RunOptimize(self):
+        x = self.x0
         k = 0
         d = 1
-        learn_rate = learn_rate
 
         fun = self.costfunc
 
@@ -188,20 +186,16 @@ class CGradDecent():
 
             if (k != 0):
                 Diff.x = x 
-                
-            if (self.Gradient != 'Central'):
-                g = fun(x)
-                grad = Diff.GetGrad(g)
-            else:
-                grad = Diff.GetGrad()
+              
+            grad = Diff.GetGrad(x)
 
             grad_Magnitude = math.sqrt(math.fsum([i*i for i in grad]))
-            #print('||Gradient||: ',grad_Magnitude)
-            if (grad_Magnitude < learn_rate):
+            print('||Gradient||: ',grad_Magnitude)
+            if (grad_Magnitude < self.MinNorm):
                 return x
 
             d = [-i for i in grad]
-
+            
             if (k != 0):
                 LineSearch.x = x
             
@@ -210,7 +204,7 @@ class CGradDecent():
             alpha = LineSearch.RunSearch()
 
             x = [x[i] + alpha * d[i] for i in range(0, len(x))]
-            #print('X:', x)
+            print('X:', x)
             k += 1
 
         return x
