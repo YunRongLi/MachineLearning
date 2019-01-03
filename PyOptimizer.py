@@ -1,9 +1,10 @@
 import math
 from PyLineSearch import CFiSearch
 from PyLineSearch import CGSSearch
+import time
 
 class CForwardDiff():
-    def __init__(self, costfunc, x, dim, eps=1e-5, percent=1e-5):
+    def __init__(self, costfunc, x, dim, eps=1e-4, percent=1e-4):
         self.__costfunc = costfunc
         self.__x = x
         self.__dim = dim
@@ -63,7 +64,7 @@ class CForwardDiff():
         return d
 
 class CBackwardDiff(CForwardDiff):
-    def __init__(self, costfunc, x, dim, eps=1e-5, percent=1e-5):
+    def __init__(self, costfunc, x, dim, eps=1e-4, percent=1e-4):
         super(CBackwardDiff, self).__init__(costfunc, x, dim, eps, percent)
 
     def GetGrad(self, x):
@@ -79,7 +80,7 @@ class CBackwardDiff(CForwardDiff):
         return d
 
 class CCentralDiff(CForwardDiff):
-    def __init__(self, costfunc, x, dim, eps=1e-5, percent=1e-5):
+    def __init__(self, costfunc, x, dim, eps=1e-4, percent=1e-4):
         super(CCentralDiff, self).__init__(costfunc, x, dim, eps, percent)
 
     def GetGrad(self,x):
@@ -168,7 +169,7 @@ class CGradDecent():
         fun = self.costfunc
 
         if (self.LineSearch == "FiS"):
-            LineSearch = CFiSearch(fun, x, d)
+            LineSearch = CFiSearch(fun, x, d, eps=0.1)
         else:
             LineSearch = CGSSearch(fun, x, d)
 
@@ -190,8 +191,9 @@ class CGradDecent():
             grad = Diff.GetGrad(x)
 
             grad_Magnitude = math.sqrt(math.fsum([i*i for i in grad]))
-            print('||Gradient||: ',grad_Magnitude)
+            # print('||Gradient||: ',grad_Magnitude)
             if (grad_Magnitude < self.MinNorm):
+                print("Gradient < MinNorm", grad_Magnitude)
                 return x
 
             d = [-i for i in grad]
@@ -200,11 +202,12 @@ class CGradDecent():
                 LineSearch.x = x
             
             LineSearch.d = d            
-
+            timeStart = time.time()
             alpha = LineSearch.RunSearch()
-
+            timeEnd = time.time()
+            print('Run Search Cost: ', timeEnd - timeStart)
             x = [x[i] + alpha * d[i] for i in range(0, len(x))]
-            print('X:', x)
+            # print('X:', x)
             k += 1
 
         return x
