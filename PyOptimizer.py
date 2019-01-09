@@ -1,4 +1,5 @@
 import math
+import numpy as np
 from PyLineSearch import CFiSearch
 from PyLineSearch import CGSSearch
 import time
@@ -72,7 +73,6 @@ class CBackwardDiff(CForwardDiff):
         fun = self.costfunc
         g = fun(x)
         for index in range(0, self.dim):
-            x = self.x.copy()
             h = x[index] * self.percent + self.eps
             x[index] = x[index] - h
             d.append((g-fun(x))/h)
@@ -187,11 +187,12 @@ class CGradDecent():
 
             if (k != 0):
                 Diff.x = x 
-              
+            
+            print('Getting Gradient')
             grad = Diff.GetGrad(x)
 
             grad_Magnitude = math.sqrt(math.fsum([i*i for i in grad]))
-            # print('||Gradient||: ',grad_Magnitude)
+            print('||Gradient||: ',grad_Magnitude)
             if (grad_Magnitude < self.MinNorm):
                 print("Gradient < MinNorm", grad_Magnitude)
                 return x
@@ -202,12 +203,16 @@ class CGradDecent():
                 LineSearch.x = x
             
             LineSearch.d = d            
-            timeStart = time.time()
+            #timeStart = time.time()
+            print('LineSearch')
             alpha = LineSearch.RunSearch()
-            timeEnd = time.time()
-            print('Run Search Cost: ', timeEnd - timeStart)
+            #timeEnd = time.time()
+            #print('Run Search Cost: ', timeEnd - timeStart)
+            print('step size', alpha)
             x = [x[i] + alpha * d[i] for i in range(0, len(x))]
             # print('X:', x)
+            print('loss', fun(x))
+            
             k += 1
 
         return x

@@ -2,11 +2,14 @@ import numpy as np
 import math
 import xlrd
 from PyOptimizer import CGradDecent
+from PyNeuronNetwork import CDense
+from PyNeuronNetwork import CNeuronNetworkModel
 
-Data_file = 'fire_theft.xls'
-book = xlrd.open_workbook(Data_file, encoding_override='utf-8')
-sheet = book.sheet_by_index(0)
-data = np.asarray([sheet.row_values(i) for i in range(1, sheet.nrows)])
+def sigmoid(x):
+    return 1./(1 + math.exp(-x))
+
+def Relu(x):
+    return np.maximum(x,0)
 
 def BatchNormalize(x):
     avg = np.average(x)
@@ -20,20 +23,63 @@ def BatchNormalize(x):
 
     return np.array(X)
 
+Data_file = 'fire_theft.xls'
+book = xlrd.open_workbook(Data_file, encoding_override='utf-8')
+sheet = book.sheet_by_index(0)
+data = np.asarray([sheet.row_values(i) for i in range(1, sheet.nrows)])
+
 X1 = data[:,0].reshape(42,1)
-X1Nor = BatchNormalize(X1)
 X2 = data[:,1].reshape(42,1)
+X1Nor = BatchNormalize(X1)
 X2Nor = BatchNormalize(X2)
+dataNor = np.concatenate((X1Nor, X2Nor), axis=1)
 z = np.linspace(1,42,num=42).reshape(42,1) / 42.
 
-def Test2VarFun1(x):
-    return x[0] - x[1] + 2*(x[0]**2) + 2 * x[0] * x[1] + x[1]**2
+Model = CNeuronNetworkModel()
+Model.add(CDense(  2, 128, activation=np.tanh))
+Model.add(CDense(128,  64, activation=np.tanh))
+Model.add(CDense( 64,  16, activation=np.tanh))
+Model.add(CDense( 16,   8, activation=np.tanh))
+Model.add(CDense(  8,   4, activation=np.tanh))
+Model.add(CDense(  4,   1, activation=np.tanh))
+Model.summary()
+X0 = Model.get_weights()
+layers = Model.layer
 
-def sigmoid(x):
-    return 1./(1 + math.exp(-x))
+def predict(data):
+    output = 0
+    for i in range(len(layers)):
+        activation = layers[i].activation
+        if (i == 0):
+            output = activation(np.dot(data.reshape(1,2), layers[i].tensor))
+        else:
+            output = activation(np.dot(output, layers[i].tensor))
+    
+    return output
 
-def Relu(x):
-    return np.maximum(x,0)
+def MSE(x):
+    loss = 0
+    index_start = 0
+    for i in range(len(layers)):
+        size = layers[i].tensor.size
+        layers[i].tensor = x[index_start:index_start + size]
+        index_start = index_start + size
+
+    for i in range(len(data)):
+        yp = predict(data[i].reshape(1,2))
+        # print('Predict' ,yp, 'Design', z[i])
+        loss = loss + (z[i] - yp)**2
+
+    loss = loss / len(data)
+    
+    return loss
+
+def PredictNN():
+    for i in range(len(data)):
+        yp = predict(data[i].reshape(1,2))
+        print('Predict' ,yp, 'Design', z[i])
+        
+    return
 
 def ChicagoNNModel(x):
     activation = math.tanh
@@ -120,19 +166,20 @@ def XORPrediction(x):
         print('x: ', [x1[i], x2[i]], 'y: ', y)
 
 def DetermineMin():
-    func = ChicagoNNModel
     #X0 = [0.1, 0.2, -0.3, 0.4, 0.5, 0.6, 0.7, -0.8, \
     #      0.9, 0.5, -0.4, 0.1, 0.2, 0.5, -0.3, 0.8, \
     #      0.7]
-
-    X0 = np.random.randn(1,38) * np.sqrt(2/38)
-    X0 = X0.tolist()[0]
-
-    Optimizer = CGradDecent(func, X0, 38, Gradient='Forward', LineSearch='GSS', MinNorm=0.0001, MaxIter=1000)
+    # X0 = np.random.randn(1,38) * np.sqrt(2/38)
+    # X0 = X0.tolist()[0]
+    
+    # yp = y_predict.predict(np.array([1, 2]))
+    # print(yp.shape)
+    Optimizer = CGradDecent(MSE, X0, len(X0), Gradient='Backward', LineSearch='GSS', MinNorm=0.001, MaxIter=100)
     X = Optimizer.RunOptimize()
-    print('X0', X0)
+    # print('X0', X0)
     print('X ', X)
-    ChicagoNNPrediction(X)
+    PredictNN()
+    # ChicagoNNPrediction(X)
     
 
 if __name__ == "__main__":

@@ -67,8 +67,6 @@ class CGSSearch():
         fg   = 0
         
         if (fg_1 >= fg_2):
-            # print('---Uncertainty Interval---')
-            # print('Lower: ', g_2, ' ,Upper: ', g_1)
             return [g_2, g_1, fg_2, fg_1]
 
         index = 1
@@ -87,8 +85,6 @@ class CGSSearch():
                 fg_1 = fg
                 fg   = func([self.x[i] + g * self.d[i] for i in range(0, len(self.d))])
                 
-            if (fg_2 > fg_1 and fg_1 < fg):
-                #print([g_2, g_1, g, fg_2, fg_1, fg])
                 return [g_2, g_1, g, fg_2, fg_1, fg]
 
             index = index + 1
@@ -97,11 +93,16 @@ class CGSSearch():
         func = self.costfunc
         rho = 0.382
 
-        I_Lower = phase1[0]
-        I_Upper = phase1[2]
-        #print('I_Lower:', I_Lower, 'I_Upper: ', I_Upper)
+        if (len(phase1) == 4):
+            I_Lower = phase1[0]
+            I_Upper = phase1[1]    
+        else:
+            I_Lower = phase1[0]
+            I_Upper = phase1[2]
+
+        print('I_Lower:', I_Lower, 'I_Upper: ', I_Upper)
         Interval = I_Upper - I_Lower
-        #print("Interval: ", Interval)
+        print("Interval: ", Interval)
         if (Interval < self.eps):
             return (I_Upper + I_Lower)/2
 
