@@ -68,14 +68,15 @@ class CBackwardDiff(CForwardDiff):
     def __init__(self, costfunc, x, dim, eps=1e-4, percent=1e-4):
         super(CBackwardDiff, self).__init__(costfunc, x, dim, eps, percent)
 
-    def GetGrad(self, x):
+    def GetGrad(self, x, data_index):
         d = []
         fun = self.costfunc
-        g = fun(x)
+        g = fun(x,data_index).tolist()[0][0]
         for index in range(0, self.dim):
             h = x[index] * self.percent + self.eps
             x[index] = x[index] - h
-            d.append((g-fun(x))/h)
+            bf = fun(x,data_index).tolist()[0][0]
+            d.append((g-bf)/h)
 
         return d
 
@@ -181,7 +182,7 @@ class CGradDecent():
             Diff = CCentralDiff(fun, x, self.dim)
 
         grad_Magnitude = math.inf
-        
+        data_index = 0
         while (k < self.MaxIter):
             print('Optimizer Iter[', k, ']')
 
@@ -189,7 +190,7 @@ class CGradDecent():
                 Diff.x = x 
             
             print('Getting Gradient')
-            grad = Diff.GetGrad(x)
+            grad = Diff.GetGrad(x,data_index)
 
             grad_Magnitude = math.sqrt(math.fsum([i*i for i in grad]))
             print('||Gradient||: ',grad_Magnitude)
@@ -205,15 +206,18 @@ class CGradDecent():
             LineSearch.d = d            
             #timeStart = time.time()
             print('LineSearch')
-            alpha = LineSearch.RunSearch()
+            alpha = LineSearch.RunSearch(data_index)
             #timeEnd = time.time()
             #print('Run Search Cost: ', timeEnd - timeStart)
             print('step size', alpha)
             x = [x[i] + alpha * d[i] for i in range(0, len(x))]
             # print('X:', x)
-            print('loss', fun(x))
+            #print('loss', fun(x))
             
+
             k += 1
+
+            
 
         return x
 

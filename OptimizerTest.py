@@ -13,9 +13,7 @@ def Relu(x):
 
 def BatchNormalize(x):
     avg = np.average(x)
-    #print('Avg',avg)
     std = np.std(x)
-    #print('std', std)
 
     X = []
     for i in range(len(x)):
@@ -35,42 +33,73 @@ X2Nor = BatchNormalize(X2)
 dataNor = np.concatenate((X1Nor, X2Nor), axis=1)
 z = np.linspace(1,42,num=42).reshape(42,1) / 42.
 
-Model = CNeuronNetworkModel()
-Model.add(CDense(  2, 128, activation=np.tanh))
-Model.add(CDense(128,  64, activation=np.tanh))
-Model.add(CDense( 64,  16, activation=np.tanh))
-Model.add(CDense( 16,   8, activation=np.tanh))
-Model.add(CDense(  8,   4, activation=np.tanh))
-Model.add(CDense(  4,   1, activation=np.tanh))
-Model.summary()
-X0 = Model.get_weights()
-layers = Model.layer
+# Model = CNeuronNetworkModel()
+# Model.add(CDense(  2, 128, activation=np.tanh))
+# Model.add(CDense(128,  64, activation=np.tanh))
+# Model.add(CDense( 64,  16, activation=np.tanh))
+# Model.add(CDense( 16,   8, activation=np.tanh))
+# Model.add(CDense(  8,   4, activation=np.tanh))
+# Model.add(CDense(  4,   1, activation=np.tanh))
+# Model.summary()
+# X0 = Model.get_weights()
+# layers = Model.layer
+
+layers = []
+layers.append(CDense(2, 128, activation=np.tanh))
+layers.append(CDense(128, 64, activation=np.tanh))
+layers.append(CDense(64, 16, activation=np.tanh))
+layers.append(CDense(16, 8, activation=np.tanh))
+layers.append(CDense(8, 4, activation=np.tanh))
+layers.append(CDense(4, 1, activation=np.tanh))
+
+X0 = []
+for i in range(len(layers)):
+    w_size = layers[i].weights.size
+    b_size = layers[i].bias.size
+    
+    for j in range(w_size):
+        X0.append(layers[i].weights.reshape(1,w_size)[0][j])
+
+    for k in range(b_size):
+        X0.append(layers[i].bias.reshape(1, b_size)[0][k])
+    
 
 def predict(data):
     output = 0
     for i in range(len(layers)):
         activation = layers[i].activation
         if (i == 0):
-            output = activation(np.dot(data.reshape(1,2), layers[i].tensor))
+            output = activation(np.add(np.dot(data.reshape(1,2), layers[i].weights), layers[i].bias))
         else:
-            output = activation(np.dot(output, layers[i].tensor))
+            output = activation(np.add(np.dot(output, layers[i].weights), layers[i].bias))
     
     return output
 
-def MSE(x):
+def MSE(x,index):
     loss = 0
     index_start = 0
     for i in range(len(layers)):
-        size = layers[i].tensor.size
-        layers[i].tensor = x[index_start:index_start + size]
-        index_start = index_start + size
+        w_size = layers[i].weights.size
+        b_size = layers[i].bias.size
+        
+        layers[i].weights = x[index_start:index_start + w_size]
+        
+        index_start = index_start + w_size
+        
+        layers[i].bias = x[index_start:index_start + b_size]
 
-    for i in range(len(data)):
-        yp = predict(data[i].reshape(1,2))
-        # print('Predict' ,yp, 'Design', z[i])
-        loss = loss + (z[i] - yp)**2
+        index_start = index_start + b_size
+        
+    # for i in range(len(data)):
+    #     yp = predict(data[i].reshape(1,2))
+    #     # print('Predict' ,yp, 'Design', z[i])
+    #     loss = loss + (z[i] - yp)**2
 
-    loss = loss / len(data)
+    # loss = loss / len(data)
+
+    yp = predict(data[index].reshape(1,2))
+    # print('Predict' ,yp, 'Design', z[i])
+    loss = (z[i] - yp)**2
     
     return loss
 

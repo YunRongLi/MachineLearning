@@ -2,20 +2,12 @@ import numpy as np
 
 class CDense():
     def __init__(self, input_dim=1, output_dim=1, activation=None):
-        self.__tensor = np.array(np.random.randn(input_dim,output_dim) * np.sqrt(2/input_dim))
+        weights = np.array(np.random.randn(input_dim,output_dim) * np.sqrt(2/input_dim))
+        bias = np.array(np.random.randn(1,output_dim) * np.sqrt(2))
+        self.__weights = weights
+        self.__bias = bias
         self.__activation = activation
         self.__layertype = 'Dense'
-
-    @property
-    def tensor(self):
-        return self.__tensor
-
-    @tensor.setter
-    def tensor(self, value):
-        if (len(value) == self.tensor.size):
-            self.__tensor = np.array(value).reshape(self.tensor.shape)
-        else:
-            print('Size Wrong')
 
     @property
     def layertype(self):
@@ -28,6 +20,28 @@ class CDense():
     @activation.setter
     def activation(self, function):
         self.__activation = function
+
+    @property
+    def weights(self):
+        return self.__weights
+
+    @weights.setter
+    def weights(self, value):
+        if (len(value) == self.weights.size):
+            self.__weights = np.array(value).reshape(self.weights.shape)
+        else:
+            print('Weight Size Wrong')
+
+    @property
+    def bias(self):
+        return self.__bias
+
+    @bias.setter
+    def bias(self, value):
+        if (len(value) == self.bias.size):
+            self.__bias = np.array(value).reshape(self.bias.shape)
+        else:
+            print('Bias Size Wrong')
 
 class CNeuronNetworkModel():
     def __init__(self):
@@ -45,7 +59,7 @@ class CNeuronNetworkModel():
         print('Layer(type)    Output Shape')
         
         for i in range(len(self.__layer)):
-            print(self.layer[i].layertype,'          ', self.layer[i].tensor.shape)
+            print(self.layer[i].layertype,'          ', self.layer[i].dim)
 
         print('---------------------------')
         return
@@ -56,7 +70,7 @@ class CNeuronNetworkModel():
     def get_weights(self):
         w = []
         for i in range(len(self.layer)):
-            shape = self.layer[i].tensor.shape
+            shape = self.layer[i].dim
             column = 1
             if (len(shape) > 1):
                 column = shape[0]
@@ -64,15 +78,10 @@ class CNeuronNetworkModel():
                     column = column * shape[j]
             
             for j in range(column):
-                w.append(self.layer[i].tensor.reshape(1, column)[0][j])
+                w.append(self.layer[i].tensor['weight'].reshape(1, column)[0][j])
+                w.append(self.layer[i].tensor['bias'][0])
 
         return w
-
-    def predict(self, x):
-        layers = self.layer.copy()
-
-        for i in range(len(layers)):
-            size = layers[i].size
 
     def run(self, inputs, outputs, optimizer):
         pass
